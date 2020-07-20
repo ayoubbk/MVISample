@@ -1,12 +1,16 @@
 package com.bks.mvisample.ui.main
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bks.mvisample.R
+import com.bks.mvisample.ui.DataStateListener
 import com.bks.mvisample.ui.main.state.MainStateEvent
+import java.lang.ClassCastException
 
 class MainFragment : Fragment() {
 
@@ -37,6 +41,7 @@ class MainFragment : Fragment() {
 
     private lateinit var viewModel: MainViewModel
 
+    lateinit var dataStateHandler : DataStateListener
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,12 +65,16 @@ class MainFragment : Fragment() {
     fun subscribeObserver() {
         viewModel.dataState.observe(viewLifecycleOwner, Observer {dataState ->
             println("DEBUG : dataState : $dataState")
-            dataState.blogPosts?.let { blogPosts ->
+
+            // handle error and message
+            dataStateHandler.onDataStateChange(dataState)
+
+            // Handle Data<T>
+            dataState.data?.blogPosts?.let { blogPosts ->
                 // set BlogPosts data
                 viewModel.setBlogListData(blogPosts)
             }
-
-            dataState.user?.let {user ->
+            dataState.data?.user?.let {user ->
                 // set User data
                 viewModel.setUserData(user)
             }
@@ -104,5 +113,18 @@ class MainFragment : Fragment() {
         viewModel.setStateEvent(MainStateEvent.GetUserEvent("1"))
     }
 
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        try {
+            dataStateHandler = context as DataStateListener
+        } catch (ex : ClassCastException) {
+            Log.e(TAG, "onAttach: $context must implement DataStateListener")
+        }
+    }
+
+    companion object {
+        private const val TAG = "MainFragment"
+    }
 
 }

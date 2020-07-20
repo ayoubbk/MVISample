@@ -8,6 +8,7 @@ import com.bks.mvisample.ui.main.state.MainStateEvent
 import com.bks.mvisample.ui.main.state.MainStateEvent.*
 import com.bks.mvisample.ui.main.state.MainViewState
 import com.bks.mvisample.util.AbsentLiveData
+import com.bks.mvisample.util.DataState
 
 class MainViewModel : ViewModel() {
 
@@ -17,7 +18,7 @@ class MainViewModel : ViewModel() {
     val viewState : LiveData<MainViewState>
         get() = _viewState
 
-    val dataState : LiveData<MainViewState> = Transformations
+    val dataState : LiveData<DataState<MainViewState>> = Transformations
         .switchMap(_stateEvent) { stateEvent ->
             stateEvent?.let {
                 handleStateEvent(stateEvent)
@@ -28,7 +29,7 @@ class MainViewModel : ViewModel() {
         println("DEBUG init MainViewModel stuff")
     }
 
-    private fun handleStateEvent(stateEvent : MainStateEvent) : LiveData<MainViewState> {
+    private fun handleStateEvent(stateEvent : MainStateEvent) : LiveData<DataState<MainViewState>> {
         return when (stateEvent) {
             is GetBlogPostsEvent -> {
                 return Repository.getBlogPosts()
