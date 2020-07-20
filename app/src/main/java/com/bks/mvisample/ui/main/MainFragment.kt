@@ -63,6 +63,7 @@ class MainFragment : Fragment() {
     }
 
     fun subscribeObserver() {
+        // Get the DataState result and set it
         viewModel.dataState.observe(viewLifecycleOwner, Observer {dataState ->
             println("DEBUG : dataState : $dataState")
 
@@ -70,16 +71,22 @@ class MainFragment : Fragment() {
             dataStateHandler.onDataStateChange(dataState)
 
             // Handle Data<T>
-            dataState.data?.blogPosts?.let { blogPosts ->
-                // set BlogPosts data
-                viewModel.setBlogListData(blogPosts)
-            }
-            dataState.data?.user?.let {user ->
-                // set User data
-                viewModel.setUserData(user)
+            dataState.data?.let {event ->
+                event.getContentIfNotHandled()?.let {mainViewState ->
+                    Log.d(TAG, "subscribeObserver: MainViewState : $mainViewState")
+                    mainViewState.blogPosts?.let { blogPosts ->
+                        // set BlogPosts data
+                        viewModel.setBlogListData(blogPosts)
+                    }
+                    mainViewState.user?.let {user ->
+                        // set User data
+                        viewModel.setUserData(user)
+                    }
+                }
             }
         })
 
+        // Observe the ViewState
         viewModel.viewState.observe(viewLifecycleOwner, Observer {viewState ->
             viewState.blogPosts?.let {
                 println("DEBUG setting BlogPosts to RecyclerView : $it")

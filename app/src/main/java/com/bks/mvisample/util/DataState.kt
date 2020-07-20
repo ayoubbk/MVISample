@@ -9,16 +9,16 @@ package com.bks.mvisample.util
  *
  */
 data class DataState<T>(
-    var message : String? = null,
+    var message : Event<String>? = null,
     var loading : Boolean = false,
-    var data : T? = null
+    var data : Event<T>? = null
 )
 {
     companion object {
 
         fun <T> error(message : String) : DataState<T> {
             return DataState(
-                message = message,
+                message = Event(message),
                 loading = false,
                 data = null
             )
@@ -37,9 +37,9 @@ data class DataState<T>(
             data : T? = null
         ): DataState<T> {
             return DataState(
-                message = message,
+                message = Event.messageEvent(message),
                 loading = false,
-                data = data
+                data = Event.dataEvent(data)
             )
         }
     }

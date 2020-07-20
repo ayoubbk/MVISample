@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.bks.mvisample.R
 import com.bks.mvisample.ui.DataStateListener
 import com.bks.mvisample.util.DataState
+import com.bks.mvisample.util.Event
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), DataStateListener {
@@ -33,14 +34,15 @@ class MainActivity : AppCompatActivity(), DataStateListener {
     }
 
     private fun handleDataStateChange(dataState: DataState<*>?) {
-        dataState?.let { it ->
-
+        dataState?.let {
             // handle loading
             showProgressBar(it.loading)
 
             // handle message
-            it.message?.let {message ->
-                showToast(message)
+            it.message?.let {event->
+                event.getContentIfNotHandled()?.let { message ->
+                    showToast(message)
+                }
             }
         }
     }
