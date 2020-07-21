@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import com.bks.mvisample.R
 import com.bks.mvisample.models.BlogPost
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import kotlinx.android.synthetic.main.fragment_main.view.*
 import kotlinx.android.synthetic.main.layout_blog_list_item.view.*
 
@@ -69,7 +70,12 @@ class BlogPostsAdapter(private val interaction: Interaction? = null) :
             }
 
             itemView.blog_title.text = item.title
+
+            // need to shrink images b/c they are very high resolution
+            val requestOptions = RequestOptions
+                .overrideOf(1920, 1080)
             Glide.with(itemView.context)
+                .applyDefaultRequestOptions(requestOptions)
                 .load(item.image)
                 .into(itemView.blog_image)
         }
