@@ -15,8 +15,7 @@ sealed class GenericApiResponse<T> {
         private const val TAG = "GenericApiResponse"
 
         fun <T> create(error: Throwable): ApiErrorResponse<T> {
-            //return ApiErrorResponse(error.message ?: "unknown error\n check network connection")
-            return ApiErrorResponse((if (error.message == "") error.message else "Unknown error\nCheck network connection")!!)
+            return ApiErrorResponse(error.message ?: "unknown error\n check network connection")
         }
 
         fun <T> create(response: Response<T>): GenericApiResponse<T> {

@@ -1,14 +1,25 @@
 package com.bks.mvisample.ui.main
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bks.mvisample.R
+import com.bks.mvisample.models.BlogPost
+import com.bks.mvisample.models.User
+import com.bks.mvisample.ui.DataStateListener
 import com.bks.mvisample.ui.main.state.MainStateEvent
+import com.bks.mvisample.util.TopSpacingItemDecoration
+import com.bumptech.glide.Glide
+import kotlinx.android.synthetic.main.fragment_main.*
+import java.lang.ClassCastException
 
-class MainFragment : Fragment() {
+class MainFragment : Fragment(), BlogPostsAdapter.Interaction {
+
 
     /**  this is how we initialize ViewModel using SavedStateViewModelFactory */
 //    private val viewModel1: MainViewModel by viewModels {
@@ -35,8 +46,17 @@ class MainFragment : Fragment() {
 //        }
 //    }
 
-    private lateinit var viewModel: MainViewModel
 
+    override fun onItemSelected(position: Int, item: BlogPost) {
+        Log.d(TAG, "onItemSelected: position $position")
+        Log.d(TAG, "onItemSelected: item :  $item")
+    }
+    
+    private lateinit var viewModel: MainViewModel
+    
+    lateinit var dataStateHandler : DataStateListener
+
+    lateinit var blogPostsAdapter: BlogPostsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,29 +75,54 @@ class MainFragment : Fragment() {
         }?: throw Exception("Invalid activity")
 
         subscribeObserver()
+        initRecyclerView()
     }
 
-    fun subscribeObserver() {
+    private fun initRecyclerView() {
+        recycler_view.apply {
+            layoutManager = LinearLayoutManager(activity)
+            val itemDecorator = TopSpacingItemDecoration(30)
+            addItemDecoration(itemDecorator)
+            blogPostsAdapter = BlogPostsAdapter(this@MainFragment)
+            adapter = blogPostsAdapter
+        }
+    }
+
+
+    private fun subscribeObserver() {
+        // Get the DataState result and set it
         viewModel.dataState.observe(viewLifecycleOwner, Observer {dataState ->
             println("DEBUG : dataState : $dataState")
-            dataState.blogPosts?.let { blogPosts ->
-                // set BlogPosts data
-                viewModel.setBlogListData(blogPosts)
-            }
 
-            dataState.user?.let {user ->
-                // set User data
-                viewModel.setUserData(user)
+            // handle error and message
+            dataStateHandler.onDataStateChange(dataState)
+
+            // Handle Data<T>
+            dataState.data?.let {event ->
+                event.getContentIfNotHandled()?.let {mainViewState ->
+                    Log.d(TAG, "subscribeObserver: MainViewState : $mainViewState")
+                    mainViewState.blogPosts?.let { blogPosts ->
+                        // set BlogPosts data
+                        viewModel.setBlogListData(blogPosts)
+                    }
+                    mainViewState.user?.let {user ->
+                        // set User data
+                        viewModel.setUserData(user)
+                    }
+                }
             }
         })
 
+        // Observe the ViewState
         viewModel.viewState.observe(viewLifecycleOwner, Observer {viewState ->
             viewState.blogPosts?.let {
                 println("DEBUG setting BlogPosts to RecyclerView : $it")
+                blogPostsAdapter.submitList(it)
             }
 
             viewState.user?.let {
                 println("DEBUG set User data : $it")
+                setUserProperties(it)
             }
         })
     }
@@ -96,6 +141,16 @@ class MainFragment : Fragment() {
         return super.onOptionsItemSelected(item)
     }
 
+    private fun setUserProperties(user : User) {
+        email.text = user.email
+        username.text = user.username
+        view?.let {
+            Glide.with(it.context)
+                .load(user.image)
+                .into(image)
+        }
+    }
+
     private fun triggerGetBlogsEvent() {
         viewModel.setStateEvent(MainStateEvent.GetBlogPostsEvent)
     }
@@ -104,5 +159,18 @@ class MainFragment : Fragment() {
         viewModel.setStateEvent(MainStateEvent.GetUserEvent("1"))
     }
 
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        try {
+            dataStateHandler = context as DataStateListener
+        } catch (ex : ClassCastException) {
+            Log.e(TAG, "onAttach: $context must implement DataStateListener")
+        }
+    }
+
+    companion object {
+        private const val TAG = "MainFragment"
+    }
 
 }
